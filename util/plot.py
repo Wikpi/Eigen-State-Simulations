@@ -26,7 +26,7 @@ def plotGraph(xValues: NDArray, solutionResult: NDArray, solutionLabel: str, sol
     # Obtaining the negative x half (from x -L to 0) of the function
     # This is only possible because of the fact that all solutions to the well potential are symmetrical
     xNegativeValues = xValues[:0:-1] * -1
-    print(xValues)
+
     yNegativeValues: NDArray
     if solutionType == "even":
         yNegativeValues = solutionResult[:0:-1] * 1
