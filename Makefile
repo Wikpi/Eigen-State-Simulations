@@ -2,11 +2,11 @@
 
 infinite:
 	@echo "Running Infinite Well Simulation..."
-	python3 -m infinite.main
+	python3 -m simulations.infinite.main
 
 finite:
 	@echo "Running Finite Well Simulation..."
-	python3 -m finite.main
+	python3 -m simulations.finite.main
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -r {} +
