@@ -11,13 +11,14 @@ class Solution:
        Class variables:
         #   label: str          - name of the solution (used to differentiate the solution when plotting)
         #   result: NDArray     - the solution of the ode itself
+        #   epsilon: float      - the specific epsilon value corresponding to the solution
 
         #   type: int           - specifies whether the solution is even (=1) or odd (=-1)
         #   normalised: NDArray - the normalized ode solution result
     """
 
     # Object constructor with optional values
-    def __init__(self, label: str = "", result: NDArray = []) -> None:
+    def __init__(self, label: str = "", result: NDArray = [], epsilon = 0) -> None:
         self.reset()
 
         if label != "":
@@ -25,6 +26,9 @@ class Solution:
 
         if result.size != 0:
             self.result = result
+
+        if epsilon != 0:
+            self.epsilon = epsilon
 
     # Reset the solution.
     def reset(self) -> None:
