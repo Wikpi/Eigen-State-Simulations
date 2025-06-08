@@ -10,7 +10,7 @@ def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, epsilo
     solutions: list = []
 
     # Epsilons list is composed of 2 epsilon initial predictions
-    epsilonHigh, epsilonLow = epsilonList
+    epsilonLow, epsilonHigh = epsilonList
     
     iterationCtx: int = 20 # Default iteration count, in the case that the model does not provide a specified count
     if hasattr(model, "iterationCount") and model.iterationCount > 0:
@@ -65,7 +65,7 @@ def solveEpsilonList(model: "simulation.ModelSystem", xValues: NDArray, epsilonL
 # Determine the wavefunction type: odd or even.
 def checkWavefunctionEvenOdd(epsilon: float) -> str:
     """`checkWavefunctionEvenOdd` determines whether the wavefunction is odd or even.
-        This is based on the fact: `$\epsilon$ = $\pow(n, 2)$` and if `n` is even the
+        This is based on the fact: `epsilon = pow(n, 2)` and if `n` is even the
         wavefunction will be odd, if `n` odd then the wavefunction will be even. 
     """
 
