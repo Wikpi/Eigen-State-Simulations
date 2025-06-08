@@ -4,11 +4,11 @@ all: infinite finite harmonic morse
 
 infinite:
 	@echo "Running Infinite Well Simulation..."
-	python3 -m simulations.well-potential.infinite.main
+	python3 -m simulations.well.infinite.main
 
 finite:
 	@echo "Running Finite Well Simulation..."
-	python3 -m simulations.well-potential.finite.main
+	python3 -m simulations.well.finite.main
 
 harmonic:
 	@echo "Running Harmonic Oscillator Potential Simulation..."
@@ -22,9 +22,10 @@ clean: clean-data clean-trash
 
 clean-data:
 	@echo "Cleaning simulation data directories..."
-	rm -rf simulations/well-potential/infinite/data/
-	rm -rf simulations/well-potential/finite/data/
+	rm -rf simulations/well/infinite/data/
+	rm -rf simulations/well/finite/data/
 	rm -rf simulations/harmonic-oscillator/data/
+	rm -rf simulations/morse/data/
 
 clean-trash:
 	@echo "Cleaning project tash..."
