@@ -28,24 +28,48 @@ class HarmonicOscillator(sm.ModelSystem):
         }
 
     @staticmethod # Just instruct the class to not inject 'self' as function argument
-    def system(y, x, epsilon) -> list:
+    def system(y, x, epsilon: float) -> list:
 
         y1 , y2 = y #unpacking psi and psi'
 
-        return[y2, (0.5 * (x**2) - epsilon) * y1] #returns rhs values of the system differential equations for psi' and psi''
+        return[y2, (0.25 * (x**2) - epsilon) * y1] #returns rhs values of the system differential equations for psi' and psi''
+    
+'''def isTendingZero(yValues: NDArray, precision: float = 1e-6, extent: int = 20):
+
+    yValuesAbs = np.fabs(yValues)
+    yTendingZero: bool = False
+    for i in range(np.size(yValuesAbs)):
+
+        if yValuesAbs[i] <= precision:
+            if i + extent > np.size(yValuesAbs):
+                extent = np.size(yValuesAbs) - i
+            for j in range(1, extent):
+                if yValuesAbs[i + j] <= precision:
+                    continue
+                else:
+                    break
+            else:
+                yTendingZero = True
+                break
+        else: 
+            continue
+
+    return yTendingZero
     
 def findSolutions(model: sm.ModelSystem, xValues: NDArray, nSolutions: int = 1, iterationLimit: int = 32) -> dict:
-    ''' `findSolutions` finds a required number of solutions for a given `model` over a range of `xValues`\n
+    '''''' `findSolutions` finds a required number of solutions for a given `model` over a range of `xValues`\n
         and returns them as a dictionary containing the epsilon values paired with the solution yValues
-    '''
+        '''
+'''
     #specifying initial variables for the solution search loop
     resultSolutions: dict = {}
     nFoundSolutions: int = 0
     bracketList: list = [(0,1)]
-    nearZero: float = 1e-5 #Decreasing this further may lead to some solutions not being recognised by the code. This is due to the limitation of the numerical method.
+    nearZero: float = 1e-4 #Decreasing this further may lead to some solutions not being recog   nised by the code. This is due to the limitation of the numerical method.
     currentIterations: int = 0
+    tail: int = 50
 
-    while nFoundSolutions <= nSolutions:
+    while nFoundSolutions < nSolutions:
 
         #applying the bracketEnergyState function to look for potential solutions within the limit
         bracketSolution: sl.Solution = core.bracketEnergyState(model, xValues, bracketList)[0] #The function returns a list of sl.Solution objects, so [0] simply extracts the first and only solution
@@ -54,7 +78,7 @@ def findSolutions(model: sm.ModelSystem, xValues: NDArray, nSolutions: int = 1, 
         bracketListTemp: list = list(bracketList[0])
 
         #checking if the bracket method leads to a valid solution by checking if it tends to 0
-        if math.fabs(bracketSolution.result[-1]) < nearZero: #This method of checking may not work as intended for different nearZero values
+        if isTendingZero(bracketSolution.result, nearZero, tail): #This method of checking may not work as intended for different nearZero values
             
             #printing the details of each found solution for debugging purposes
             if debug:
@@ -92,7 +116,22 @@ def findSolutions(model: sm.ModelSystem, xValues: NDArray, nSolutions: int = 1, 
     else:
         print("Solutions successfully found within %d iterations, at epsilon values: "%currentIterations, list(resultSolutions.keys()))
 
-    return resultSolutions
+    return resultSolutions'''
+
+def findSolutionBrackets(model: sm.ModelSystem, xValues: NDArray, parity: str = "even", epsilonMin: float = 0.0, epsilonMax: float = 10, epsilonStep: float = 0.1):
+
+    epsilonRange: NDArray = np.linspace(epsilonMin, epsilonMax, int(epsilonMax/epsilonStep))
+    yEndpoints: list = []
+    for epsilon in epsilonRange:
+        solution: sl.Solution = sl.getSolution(model, xValues, epsilon, parity= parity)
+        yEndpoints.append(solution.result[-1])
+    
+    solutionBrackets: dict = {}
+    for i in range(np.size(epsilonRange) - 1):
+        if yEndpoints[i + 1] * yEndpoints[i] < 0:
+            solutionBrackets[(epsilonRange[i], epsilonRange[i + 1])] = parity
+    
+    return solutionBrackets
 
 def main() -> None:
     
@@ -100,21 +139,27 @@ def main() -> None:
 
     #specifying the solution search parameters
     nSolutions: int = 5
-    xValues = np.linspace(0, 4, int(4/0.005))
-    iterationLimit = 32
+    xValues = np.linspace(0, 7, int(7/0.005))
 
     simulation: sm.Simulation = sm.Simulation(title = "%s bracket simulation: first %d solutions"%(model.label, nSolutions))
-    simulation.modifyGrid(0, 4, 0.005, 0, "$Position  \\xi  (Dimensionless)$", "$Wavefunction y_1 Values")
+    simulation.modifyGrid(0, 7, 0.005, 0, "$Position  \\xi  (Dimensionless)$", "$Wavefunction y_1 Values")
 
     #obtaining the required solutions
-    resultSolutions: dict = findSolutions(model, xValues, nSolutions, iterationLimit)
-    resultEpsilons: list = list(resultSolutions.keys())
 
     #specifying simulation parameters, particularly for the bracketEnergyState() function
     model.iterationCount = 32
     model.approximation = 1e-16
 
-    sm.solveSimulation(simulation, model, resultEpsilons, True)
+    solutionBrackets =  {}
+    evenBrackets = findSolutionBrackets(model, xValues, parity="even", epsilonMax = 5, epsilonStep= 0.01,)
+    oddBrackets = findSolutionBrackets(model, xValues, parity= "odd", epsilonMax = 5, epsilonStep= 0.01,)
+    
+    solutionBrackets.update(evenBrackets)
+    solutionBrackets.update(oddBrackets)
+
+
+    #sm.solveSimulation(simulation, model, resultEpsilons, True)
+    sm.bracketSimulation(simulation, model, solutionBrackets, plot= True)
 
     print("Done running the %s simulation." % model.label)
 

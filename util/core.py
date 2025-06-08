@@ -10,7 +10,7 @@ import util.solution as sl
 import util.simulation as sm
 
 # One of simulation computations.
-def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracketList: list) -> list[sl.Solution]:
+def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracketList: dict) -> None:
     """`bracketEnergyState` finds the energy state approximation using bracketing method based on the `model` and `bracketList[[epsilonHigh, epsilonLow]...]`"""
     
     solutions: list[sl.Solution] = []
@@ -23,8 +23,9 @@ def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracke
     if hasattr(model, "approximatation"):
         approximatation = model.approximatation
 
-    # Go through all bracker pairs
-    for (epsilonLow, epsilonHigh) in bracketList:
+    for bracket in bracketList:
+        parity = bracketList[bracket]
+        (epsilonLow, epsilonHigh) = bracket
         for i in range(iterationCtx):
             # If prediction gap is already smaller than `approximation` then its good enough
             if abs(epsilonHigh - epsilonLow) < approximatation:
@@ -33,17 +34,18 @@ def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracke
             # Midpoint in the prediction gap - current approximation
             epsilonMid: float = (epsilonHigh + epsilonLow) / 2
             
-            solutionHigh: sl.Solution = sl.getSolution(model, xValues, epsilonHigh, True)
-            solutionMid: sl.Solution = sl.getSolution(model, xValues, epsilonMid, True)
+            solutionLow: sl.Solution = sl.getSolution(model, xValues, epsilonLow, True, parity)
+            solutionHigh: sl.Solution = sl.getSolution(model, xValues, epsilonHigh, True, parity)
+            solutionMid: sl.Solution = sl.getSolution(model, xValues, epsilonMid, True, parity)
             
             # Depending on what solution is at the wall (where lim x -> L and function 'vanishes), adapt the bounding prediction limits
-            if np.sign(solutionMid.normalised[-1]) == np.sign(solutionHigh.normalised[-1]):
+            if np.sign(solutionMid.result[-1]) == np.sign(solutionHigh.result[-1]):
                 epsilonHigh = epsilonMid
             else:
                 epsilonLow = epsilonMid
         
         epsilonRoot = (epsilonHigh + epsilonLow) / 2
-        solution: sl.Solution = sl.getSolution(model, xValues, epsilonRoot, True)
+        solution: sl.Solution = sl.getSolution(model, xValues, epsilonRoot, True, parity)
 
         # Append the last made approximation through bracketing
         solutions.append(solution)

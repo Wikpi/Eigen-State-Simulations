@@ -54,18 +54,18 @@ class Solution:
         return self.normalised
 
 # Compues a new model solution.
-def getSolution(model: "simulation.ModelSystem", xValues: NDArray, epsilon: float, normalise: bool = False) -> Solution:
+def getSolution(model: "simulation.ModelSystem", xValues: NDArray, epsilon: float, normalise: bool = False, parity: str = "even") -> Solution:
     """`getSolution` computes a new solution result based on the provided `model` and `epsilon` values"""
     
     # Determine the type of solution: odd / even
-    solutionType: str = core.checkWavefunctionEvenOdd(epsilon)
+    #solutionType: str = core.checkWavefunctionEvenOdd(epsilon)
 
     # Solution results
-    solutionResult: NDArray = odeint(model.system, model.getInitialConditions(solutionType), xValues, args=(epsilon,))
+    solutionResult: NDArray = odeint(model.system, model.getInitialConditions(parity), xValues, args=(epsilon,))
 
     # Configure new solution class object
     newSolution: Solution = Solution("$\\epsilon$ = %.1f" % epsilon, solutionResult[:, 0])
-    newSolution.type = solutionType
+    newSolution.type = parity
     newSolution.epsilon = epsilon
 
     # Most of the time we want to get normalised results
