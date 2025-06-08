@@ -31,7 +31,6 @@ def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracke
             # Midpoint in the prediction gap - current approximation
             epsilonMid: float = (epsilonHigh + epsilonLow) / 2
             
-            solutionLow: sl.Solution = sl.getSolution(model, xValues, epsilonLow, True)
             solutionHigh: sl.Solution = sl.getSolution(model, xValues, epsilonHigh, True)
             solutionMid: sl.Solution = sl.getSolution(model, xValues, epsilonMid, True)
             
