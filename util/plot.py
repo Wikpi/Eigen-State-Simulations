@@ -65,3 +65,10 @@ def saveGraph(outputPath: str = "data", graphName: str = "new-graph") -> None:
     filename: str = os.path.join(outputPath, "%s.png" % graphName)
     
     plt.savefig(filename)
+
+# Defines well walls on the graph.
+def defineWellGraph(wellWall: float) -> None:
+    """`defineWellGraph` displays well walls on the simulation graph."""
+
+    plt.axvline(x=-wellWall, linestyle='--')
+    plt.axvline(x=wellWall, linestyle='--')

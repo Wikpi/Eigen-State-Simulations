@@ -2,6 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 import util.plot as plot
 import util.core as core
+import util.solution as sl
 
 # Base model system object class.
 class ModelSystem:
@@ -74,8 +75,7 @@ class Simulation:
         
         # Overall simulation integration range
         self.xValues = np.linspace(xMin, xMax, int(xMax/xStep))
-        # The well wall
-        self.wellWall
+        self.wellWall = wellWall
 
         if xLabel != "":
             self.xLabel = xLabel
@@ -144,6 +144,8 @@ class Simulation:
 
         # Clear the graph of preivous simulation
         plot.clearGraph()
+
+        plot.defineWellGraph(self.wellWall)
 
         # Configure new simulation graph parameters
         plot.configureGraph(self.title, self.xLabel, self.yLabel, True)
