@@ -65,16 +65,20 @@ class Simulation:
         self.xLabel: str = "x (dimensionless)" # Abstract non-empty x axis label
         self.yLabel: str = "y (dimensionless)" # Abstract non-empty y axis label
         self.xValues: NDArray = np.array([])
+        self.wellWall: float = 0
         self.model: ModelSystem = None
         self.initialValues: list = []
         self.solutions: list = []
 
     # Define a new simulation space.
-    def modifyGrid(self, xMin: float, xMax: float, xStep: float, xLabel: str = "", yLabel: str = "") -> None:
+    def modifyGrid(self, xMin: float, xMax: float, xStep: float, wellWall: float, xLabel: str = "", yLabel: str = "") -> None:
         """`modifyGrid` defines a new simulation space."""
         
+        # Overall simulation integration range
         self.xValues = np.linspace(xMin, xMax, int(xMax/xStep))
-        
+        # The well wall
+        self.wellWall
+
         if xLabel != "":
             self.xLabel = xLabel
 

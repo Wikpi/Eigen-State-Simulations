@@ -2,15 +2,14 @@ import math
 import numpy as np
 from numpy.typing import NDArray
 import util.solution as sl
+from scipy.optimize import fsolve
+import util.simulation as sm
 
 # One of simulation computations.
-def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, epsilonList: list) -> None:
-    """`bracketEnergyState` finds the energy state approximation using bracketing method based on the `model` and `epsilonList[epsilonHigh, epsilonLow]`"""
+def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracketList: list) -> None:
+    """`bracketEnergyState` finds the energy state approximation using bracketing method based on the `model` and `bracketList[[epsilonHigh, epsilonLow]...]`"""
     
     solutions: list = []
-
-    # Epsilons list is composed of 2 epsilon initial predictions
-    epsilonLow, epsilonHigh = epsilonList
     
     iterationCtx: int = 20 # Default iteration count, in the case that the model does not provide a specified count
     if hasattr(model, "iterationCount") and model.iterationCount > 0:
@@ -20,26 +19,30 @@ def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, epsilo
     if hasattr(model, "approximatation"):
         approximatation = model.approximatation
 
-    for i in range(iterationCtx):
-        # If prediction gap is already smaller than `approximation` then its good enough
-        if abs(epsilonHigh - epsilonLow) < approximatation:
-            break
+    for (epsilonLow, epsilonHigh) in bracketList:
+        for i in range(iterationCtx):
+            # If prediction gap is already smaller than `approximation` then its good enough
+            if abs(epsilonHigh - epsilonLow) < approximatation:
+                break
 
-        # Midpoint in the prediction gap - current approximation
-        epsilonMid: float = (epsilonHigh + epsilonLow) / 2
+            # Midpoint in the prediction gap - current approximation
+            epsilonMid: float = (epsilonHigh + epsilonLow) / 2
+            
+            solutionLow: sl.Solution = sl.getSolution(model, xValues, epsilonLow, True)
+            solutionHigh: sl.Solution = sl.getSolution(model, xValues, epsilonHigh, True)
+            solutionMid: sl.Solution = sl.getSolution(model, xValues, epsilonMid, True)
+            
+            # Depending on what solution is at the wall (where lim x -> L and function 'vanishes), adapt the bounding prediction limits
+            if np.sign(solutionMid.normalised[-1]) == np.sign(solutionHigh.normalised[-1]):
+                epsilonHigh = epsilonMid
+            else:
+                epsilonLow = epsilonMid
         
-        solutionLow: list = sl.getSolution(model, xValues, epsilonLow, True)
-        solutionHigh: list = sl.getSolution(model, xValues, epsilonHigh, True)
-        solutionMid: list = sl.getSolution(model, xValues, epsilonMid, True)
-        
-        # Depending on what solution is at the wall (where lim x -> L and function 'vanishes), adapt the bounding prediction limits
-        if np.sign(solutionMid.normalised[-1]) == np.sign(solutionHigh.normalised[-1]):
-            epsilonHigh = epsilonMid
-        else:
-            epsilonLow = epsilonMid
-    
-    # Return back the last made approximation through bracketing
-    solutions.extend([solutionHigh, solutionLow])
+        epsilonRoot = (epsilonHigh + epsilonLow) / 2
+        solution: sl.Solution = sl.getSolution(model, xValues, epsilonRoot, True)
+
+        # Append the last made approximation through bracketing
+        solutions.append(solution)
 
     return solutions
 
@@ -73,3 +76,64 @@ def checkWavefunctionEvenOdd(epsilon: float) -> str:
         return "odd"
     else:
         return "even"
+
+def evenModel(z, z0) -> NDArray:
+    return np.sqrt(z0**2 - z**2) - z * np.tan(z)
+
+# for even solutions (n = 1,3,5,…)
+def evenGuesses(z0: float) -> list:
+    return [(2*k-1)*np.pi/2 for k in range(1, int(z0/np.pi)+1)]
+
+def oddModel(z, z0) -> NDArray:
+    with np.errstate(divide='ignore', invalid='ignore'): # since the denominator is alwasy really close to 0
+        return np.sqrt(z0**2 - z**2) + z / np.tan(z)
+
+# for odd solutions (n = 2,4,6,…)
+def oddGuesses(z0: float) -> list:
+    return [k*np.pi for k in range(1, int(z0/np.pi)+1)]
+
+# Finds roots of function with initial guess.
+def findRoots(function, guesses, z0) -> list:
+    roots: list = []
+
+    for guess in guesses:
+        root, info, ier, _ = fsolve(lambda z: function(z, z0), guess, full_output=True)
+        # Check if valid
+        if ier != 1 or 0 >= root or root >= z0:
+            continue
+
+        # avoid duplicates within tolerance
+        if any(np.isclose(root, s, atol=1e-4) for s in roots):
+            continue
+
+        roots.append(root[0])
+
+    return sorted(roots)
+
+def computeBrackets(roots: list, margin: float = 1e-2) -> list:
+    brackets: list = []
+
+    for root in roots:
+        # Convert z into epsilon vlaues: epsilon = (2 * z / pi) ** 2
+        epsilon = (2 * root / np.pi)**2
+
+        # Compute marginalised brackers
+        brackets.append((epsilon - margin, epsilon + margin))
+
+    return brackets
+
+def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> float:
+    solutions: list = []
+
+    evenRoots = findRoots(evenModel, evenGuesses(z0), z0)
+    evenBrackets = computeBrackets(evenRoots)
+    
+    oddRoots = findRoots(oddModel, oddGuesses(z0), z0)
+    oddBrackets = computeBrackets(oddRoots)
+    
+    fullBrackets = evenBrackets + oddBrackets
+
+    # Even though we found roots, it would be better to bracket through and approxiamte the solution even further
+    solutions = bracketEnergyState(model, xValues, fullBrackets)
+
+    return solutions

@@ -22,7 +22,7 @@ def configureGraph(title: str, xLabel: str, yLabel: str, showGrid: bool = False)
 # Plot the simulation graph.
 def plotGraph(xValues: NDArray, solutionResult: NDArray, solutionLabel: str, solutionType: str) -> None:
     """`plotGraph` computes the simulation graph values."""
-    
+
     # Obtaining the negative x half (from x -L to 0) of the function
     # This is only possible because of the fact that all solutions to the well potential are symmetrical
     xNegativeValues = xValues[:0:-1] * -1

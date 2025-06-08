@@ -49,7 +49,7 @@ def main() -> None:
     model.iterationCount = 25
     model.approximatation = 1e-6
 
-    bracketList: list = [0.8, 1.1]
+    bracketList: list = [(0.8, 1.1)]
 
     # Bracket energy state
     sm.runSimulation(simulation, model, bracketList, True)
