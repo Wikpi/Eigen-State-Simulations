@@ -69,7 +69,7 @@ class Simulation:
         self.solutions: list = []
 
     # Define a new simulation space.
-    def modifyGrid(self, xMin: float, xMax: float, xStep: float, wellWall: float, xLabel: str = "", yLabel: str = "") -> None:
+    def modifyGrid(self, xMin: float, xMax: float, xStep: float, wellWall: float = 0, xLabel: str = "", yLabel: str = "") -> None:
         """`modifyGrid` defines a new simulation space."""
         
         # Overall simulation integration range
@@ -82,6 +82,9 @@ class Simulation:
 
         if yLabel != "":
             self.yLabel = yLabel
+
+        if wellWall != 0:
+            self.wellWall = wellWall
 
     # Change the simulation model.
     def modifyModel(self, model: ModelSystem) -> None:
