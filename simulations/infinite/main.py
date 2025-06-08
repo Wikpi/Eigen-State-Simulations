@@ -7,14 +7,12 @@ class InfiniteWellPotential(sm.ModelSystem):
        Class variables:
         #   label: str              - name of the model system
         #   initialConditions: dict - model system initial conditions
-        #   type: str               - type of model simulation: solve or bracket
         #   dataPath: str           - path to simulation data
     """
 
     # Infinite well potential model constructor
     def __init__(self) -> None:
         self.label: str = "Infinite Well Potential"
-        self.type: str = "solve"
         self.dataPath: str = "simulations/infinite/data"
         self.initialConditions: dict = {
             "odd": [0, 1],
@@ -39,20 +37,19 @@ def main() -> None:
     epsilonList: list = [1, 4, 9, 16]
 
     # Solve system of ODEs for epsilon list
-    sm.runSimulation(simulation, model, epsilonList, True)
+    sm.solveSimulation(simulation, model, epsilonList, True)
 
     ### Update the model to simulation energy state finding using bracketing method
 
     simulation.title = "%s Bracket Simulation" % model.label
 
-    model.type = "bracket"
     model.iterationCount = 25
     model.approximatation = 1e-6
 
     bracketList: list = [(0.8, 1.1)]
 
     # Bracket energy state
-    sm.runSimulation(simulation, model, bracketList, True)
+    sm.bracketSimulation(simulation, model, bracketList, True)
 
     print("Done running the %s simulation." % model.label)
 

@@ -10,14 +10,12 @@ class ModelSystem:
        Class variables:
         #   label: str              - name of the model system
         #   initialConditions: dict - model system initial conditions
-        #   type: str               - type of model simulation: solve or bracket
         #   dataPath: str           - path to simulation data
     """
 
     # Abstract object constructor.
     def __init__(self) -> None:
         self.label: str = "New Model System" # Abstract non-empty model label
-        self.type: str = "solve"
         self.dataPath: str = "data"
         self.initialConditions: dict = {
             "odd": [],
@@ -91,9 +89,15 @@ class Simulation:
         
         self.model = model
 
-    # Run the simulation
-    def run(self, epsilonList: list, plot: bool = False) -> list:
-        """`run` starts the simulation, computes the solutions for the given system model and based on `plot` displays the solution graphs."""
+    # Clear the simulation of any results.
+    def clearSolutions(self) -> None:
+        """`clearSOlutions` removes any residual solutions left from previous simulatopn attempts."""
+
+        self.solutions.clear()
+
+    # Run the simulation solving method.
+    def runSolve(self, epsilonList: list, plot: bool = False) -> list:
+        """`runSolve` runs the simulation in solving mode."""
         
         if self.model is None:
             return ValueError("No model given for the simulation.")
@@ -101,14 +105,29 @@ class Simulation:
         if self.xValues.size == 0:
             return ValueError("Simulation space was not defined.")
 
-        # Clear previous simulation results before starting a new simulation
-        self.solutions.clear()
+        self.clearSolutions()
 
-        # Run over all provided epsilon values
-        if hasattr(self.model, "type") and self.model.type == "bracket":
-            self.solutions = core.bracketEnergyState(self.model, self.xValues, epsilonList)
-        else:
-            self.solutions = core.solveEpsilonList(self.model, self.xValues, epsilonList)
+        self.solutions = core.solveEpsilonList(self.model, self.xValues, epsilonList)
+
+        # Plotting is optional
+        if plot:
+            self.plot()
+
+        return self.solutions
+
+    # Run the simulation bracketing method.
+    def runBracket(self, bracketList: list, plot: bool = False) -> list:
+        """`runBracket` runs the simulation in bracketing mode."""
+        
+        if self.model is None:
+            return ValueError("No model given for the simulation.")
+
+        if self.xValues.size == 0:
+            return ValueError("Simulation space was not defined.")
+
+        self.clearSolutions()
+
+        self.solutions = core.bracketEnergyState(self.model, self.xValues, bracketList)
 
         # Plotting is optional
         if plot:
@@ -135,17 +154,26 @@ class Simulation:
         # Display the graph
         plot.displayGraph()
 
-# Helper script to simplify simulation running and debugging.
-def runSimulation(simulation: Simulation, model: ModelSystem, epsilonList: list, plot: bool = False) -> list:
-    """`runSImulation` simplifies simulation running by immediatly updating simulation model and handling errors."""
-    
+def solveSimulation(simulation: Simulation, model: ModelSystem, epsilonList: list, plot: bool = False) -> list:    
     result: list = []
 
     try:
         simulation.modifyModel(model)
 
-        result = simulation.run(epsilonList, plot)
+        result = simulation.runSolve(epsilonList, plot)
     except ValueError as error:
-        print("Error running the simulation: %s" % error)
+        print("Error solving the simulation: %s" % error)
+
+    return result
+
+def bracketSimulation(simulation: Simulation, model: ModelSystem, bracketList: list, plot: bool = False) -> list: 
+    result: list = []
+
+    try:
+        simulation.modifyModel(model)
+
+        result = simulation.runBracket(bracketList, plot)
+    except ValueError as error:
+        print("Error bracketing the simulation: %s" % error)
 
     return result
