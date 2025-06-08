@@ -70,5 +70,8 @@ def saveGraph(outputPath: str = "data", graphName: str = "new-graph") -> None:
 def defineWellGraph(wellWall: float) -> None:
     """`defineWellGraph` displays well walls on the simulation graph."""
 
+    if wellWall == 0:
+        return
+
     plt.axvline(x=-wellWall, linestyle='--')
     plt.axvline(x=wellWall, linestyle='--')

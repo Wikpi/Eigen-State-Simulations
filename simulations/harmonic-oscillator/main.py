@@ -104,7 +104,7 @@ def main() -> None:
     iterationLimit = 32
 
     simulation: sm.Simulation = sm.Simulation(title = "%s bracket simulation: first %d solutions"%(model.label, nSolutions))
-    simulation.modifyGrid(0, 4, 0.005, "$Position  \\xi  (Dimensionless)$", "$Wavefunction y_1 Values")
+    simulation.modifyGrid(0, 4, 0.005, 0, "$Position  \\xi  (Dimensionless)$", "$Wavefunction y_1 Values")
 
     #obtaining the required solutions
     resultSolutions: dict = findSolutions(model, xValues, nSolutions, iterationLimit)
@@ -114,7 +114,7 @@ def main() -> None:
     model.iterationCount = 32
     model.approximation = 1e-16
 
-    sm.runSimulation(simulation, model, resultEpsilons, True)
+    sm.solveSimulation(simulation, model, resultEpsilons, True)
 
     print("Done running the %s simulation." % model.label)
 
