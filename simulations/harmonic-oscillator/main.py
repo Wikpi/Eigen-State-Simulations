@@ -21,7 +21,7 @@ class HarmonicOscillator(sm.ModelSystem):
     def __init__(self) -> None:
         self.label: str = "Harmonic Oscillator"
         self.type: str = "solve"
-        self.dataPath: str = "simulations/harmonic/data"
+        self.dataPath: str = "simulations/harmonic-oscillator/data"
         self.initialConditions: dict = {
             "odd": [0, 1],
             "even": [1, 0]
