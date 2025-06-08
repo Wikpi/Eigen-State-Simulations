@@ -1,5 +1,8 @@
-import util.simulation as sm
+# Package imports
 from scipy.constants import pi
+
+# Custom imports
+import util.simulation as sm
 
 class InfiniteWellPotential(sm.ModelSystem):
     """Base model system object class. Should be inherited and adapted per simulation.

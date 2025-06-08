@@ -1,8 +1,11 @@
+# Package imports
 import math
 import numpy as np
 from numpy.typing import NDArray
-import util.solution as sl
 from scipy.optimize import fsolve
+
+# Custom imports
+import util.solution as sl
 import util.simulation as sm
 
 # One of simulation computations.

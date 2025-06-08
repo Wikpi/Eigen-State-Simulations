@@ -1,8 +1,11 @@
+# Package imports
+import math
+import numpy as np
 from numpy.typing import NDArray
 from scipy.integrate import odeint
-import numpy as np
+
+# Custom imports
 import util.core as core
-import math
 
 # Base solution object class
 class Solution:
