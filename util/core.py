@@ -77,29 +77,14 @@ def checkWavefunctionEvenOdd(epsilon: float) -> str:
     else:
         return "even"
 
-def evenModel(z, z0) -> NDArray:
-    return np.sqrt(z0**2 - z**2) - z * np.tan(z)
-
-# for even solutions (n = 1,3,5,…)
-def evenGuesses(z0: float) -> list:
-    return [(2*k-1)*np.pi/2 for k in range(1, int(z0/np.pi)+1)]
-
-def oddModel(z, z0) -> NDArray:
-    with np.errstate(divide='ignore', invalid='ignore'): # since the denominator is alwasy really close to 0
-        return np.sqrt(z0**2 - z**2) + z / np.tan(z)
-
-# for odd solutions (n = 2,4,6,…)
-def oddGuesses(z0: float) -> list:
-    return [k*np.pi for k in range(1, int(z0/np.pi)+1)]
-
 # Finds roots of function with initial guess.
 def findRoots(function, guesses, z0) -> list:
     roots: list = []
 
     for guess in guesses:
-        root, info, ier, _ = fsolve(lambda z: function(z, z0), guess, full_output=True)
+        root, info, ier, _ = fsolve(function, guess, args=(z0,), full_output=True)
         # Check if valid
-        if ier != 1 or 0 >= root or root >= z0:
+        if ier != 1:
             continue
 
         # avoid duplicates within tolerance
@@ -121,19 +106,3 @@ def computeBrackets(roots: list, margin: float = 1e-2) -> list:
         brackets.append((epsilon - margin, epsilon + margin))
 
     return brackets
-
-def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> float:
-    solutions: list = []
-
-    evenRoots = findRoots(evenModel, evenGuesses(z0), z0)
-    evenBrackets = computeBrackets(evenRoots)
-    
-    oddRoots = findRoots(oddModel, oddGuesses(z0), z0)
-    oddBrackets = computeBrackets(oddRoots)
-    
-    fullBrackets = evenBrackets + oddBrackets
-
-    # Even though we found roots, it would be better to bracket through and approxiamte the solution even further
-    solutions = bracketEnergyState(model, xValues, fullBrackets)
-
-    return solutions

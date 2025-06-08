@@ -5,6 +5,7 @@ import numpy as np
 from numpy.typing import NDArray
 import util.core as core
 import util.plot as plot
+import util.solution as sl
 
 class FiniteWellPotential(sm.ModelSystem):
     """Base model system object class for finite well potential simulation.
@@ -12,33 +13,79 @@ class FiniteWellPotential(sm.ModelSystem):
        Class variables:
         #   label: str              - name of the model system
         #   initialConditions: dict - model system initial conditions
-        #   type: str               - type of model simulation: solve or bracket
         #   dataPath: str           - path to simulation data
     """
 
     # Infinite well potential model constructor
     def __init__(self) -> None:
         self.label: str = "Finite Well Potential"
-        self.type: str = "solve"
-        self.V0: float = 8.0
         self.dataPath: str = "simulations/finite/data"
         self.initialConditions: dict = {
             "odd": [0, 1],
             "even": [1, 0]
         }
 
-    
-
     @staticmethod # Just instruct the class to not inject 'self' as function argument
     def system(y, x, epsilon: float) -> list:
         """Finite Well Potential model system structure."""
 
         psi, dpsi = y # psi and psi derivative
-        V0 = 8
 
         v = computeV(x)
 
         return [dpsi, pi**2 * (v - epsilon) * psi]
+
+def computeV(x: float) -> NDArray:
+    V0 = 1 # Some debug potential outside the well
+
+    return np.piecewise(x, [np.abs(x) <= wellWall, np.abs(x) > wellWall], [0, V0])
+
+def evenModel(z, z0) -> NDArray:
+    return np.sqrt(z0**2 - z**2) - z * np.tan(z)
+
+# For even solutions (n = 1,3,5,…)
+def evenGuesses(z0: float) -> list:
+    guesses = []
+
+    # One solution per full scope of pi
+    kMax = int(z0 / pi)
+
+    for k in range(1, kMax + 1):
+        guesses.append((2 * k - 1) * pi / 2)
+
+    return guesses
+
+def oddModel(z, z0) -> NDArray:
+    with np.errstate(divide='ignore', invalid='ignore'): # since the denominator is always really close to 0
+        return np.sqrt(z0**2 - z**2) + z / np.tan(z)
+
+# For odd solutions (n = 2,4,6,…)
+def oddGuesses(z0: float) -> list:
+    guesses: list = []
+
+    # One solution/guess per full scope of pi
+    kMax = int(z0 / pi)
+
+    # Compute all kMax guess (inclusive)
+    for k in range(1, kMax + 1):
+        guesses.append(k * pi)
+
+    return guesses
+
+# Computes the epsilon energy brackets for simulation.
+def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> list:
+    solutions: list = []
+
+    evenRoots = core.findRoots(evenModel, evenGuesses(z0), z0)    
+    oddRoots = core.findRoots(oddModel, oddGuesses(z0), z0)
+
+    # Even though we found the roots, it would be better to bracket through and approxiamte the solution even further
+    evenBrackets = core.computeBrackets(evenRoots)
+    oddBrackets = core.computeBrackets(oddRoots)
+
+    fullBrackets = evenBrackets + oddBrackets
+
+    return fullBrackets
 
 # The start value of integration
 xMin: float = 0
@@ -49,48 +96,37 @@ xMax: float = wellWall * 3
 # The step value
 xStep: float = 0.005
 
-V0 = 8
-
-def computeV(x: float) -> NDArray:
-    return np.piecewise(x, [np.abs(x) <= wellWall, np.abs(x) > wellWall], [0, V0])
-
 def main() -> None:
     model: FiniteWellPotential = FiniteWellPotential()
 
     simulation: sm.Simulation = sm.Simulation("%s Solve Simulation" % model.label)
-    simulation.modifyGrid(xMin, xMax, xStep, wellWall, "Position x/L (Dimensionless)", "Wavefunction values")
+    simulation.modifyGrid(xMin, xMax, xStep, wellWall, "v0 (Dimensionless)", "Wavefunction values")
     
-    # Epsilon list to find solutions for
-    # epsilonList: list = [1, 4, 9, 16]
+    bracketList = []
 
-    # Solve system of ODEs for epsilon list
-    # sm.runSimulation(simulation, model, epsilonList, True)
-    
-    epsilonList = []
-
+    # Initial z0 list
     z0List = [1, 5, 8, 14]
+
+    # Compute all epsilon brackets from initial z0
     for z0 in z0List:
-        newEpsilon = core.findEnergy(model, z0, simulation.xValues)
+        newStates = findEnergy(model, z0, simulation.xValues)
 
-        epsilonList.append(newEpsilon)
+        bracketList.extend(newStates)
 
-    # print(epsilonList)
+    # sm.bracketSimulation(simulation, model, bracketList, True)
+    simulation.modifyModel(model)
+    solutions = simulation.runBracket(bracketList, False)
 
-    # Clear the graph of preivous simulation
-    plot.clearGraph()
+    # Since solution object initializations are adapted for epsilons, need to hard change the labels into z0 here
+    # Although could leave the epsilons as well, but would more obscure.
+    for solution in solutions:
+        z0 = round(pi / 2 * np.sqrt(solution.epsilon))
 
-    # Configure new simulation graph parameters
-    plot.configureGraph("new simulation", "x", "y", True)
+        solution.label = "z0 = %d" % z0
 
-    # Graph every solution
-    for epsilon in epsilonList:
-        for solution in epsilon:
-            plot.plotGraph(simulation.xValues, solution.normalised, solution.label, solution.type)
+    simulation.solutions = solutions
 
-    plot.saveGraph(model.dataPath, "new title")
-
-    # Display the graph
-    plot.displayGraph()
+    simulation.plot()
 
     return  
 

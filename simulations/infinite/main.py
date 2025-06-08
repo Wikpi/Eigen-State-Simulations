@@ -32,7 +32,7 @@ def main() -> None:
     model: InfiniteWellPotential = InfiniteWellPotential()
 
     simulation: sm.Simulation = sm.Simulation("%s Solve Simulation" % model.label)
-    simulation.modifyGrid(0, 0.5, 0.005, "Position x/L (Dimensionless)", "Wavefunction values")
+    simulation.modifyGrid(0, 0.5, 0.005, 0.5, "Position x/L (Dimensionless)", "Wavefunction values")
     
     epsilonList: list = [1, 4, 9, 16]
 
