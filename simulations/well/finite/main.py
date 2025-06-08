@@ -1,11 +1,12 @@
-from scipy.constants import pi
-from scipy.constants import hbar
-import util.simulation as sm
+# Package imports
 import numpy as np
+from scipy.constants import pi
 from numpy.typing import NDArray
+
+# Custom imports
+import util.simulation as sm
 import util.core as core
 import util.plot as plot
-import util.solution as sl
 
 class FiniteWellPotential(sm.ModelSystem):
     """Base model system object class for finite well potential simulation.
@@ -74,8 +75,6 @@ def oddGuesses(z0: float) -> list:
 
 # Computes the epsilon energy brackets for simulation.
 def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> list:
-    solutions: list = []
-
     evenRoots = core.findRoots(evenModel, evenGuesses(z0), z0)    
     oddRoots = core.findRoots(oddModel, oddGuesses(z0), z0)
 

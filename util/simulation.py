@@ -1,5 +1,8 @@
+# Package imports
 import numpy as np
 from numpy.typing import NDArray
+
+# Custom imports
 import util.plot as plot
 import util.core as core
 import util.solution as sl

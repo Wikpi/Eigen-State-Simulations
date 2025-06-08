@@ -1,7 +1,8 @@
-import matplotlib.pyplot as plt
-from numpy.typing import NDArray
+# Package imports
 import numpy as np
 import os
+import matplotlib.pyplot as plt
+from numpy.typing import NDArray
 
 # Clear graph.
 def clearGraph() -> None:
