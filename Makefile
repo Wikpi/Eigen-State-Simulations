@@ -2,11 +2,11 @@
 
 infinite:
 	@echo "Running Infinite Well Simulation..."
-	python3 -m simulations.infinite.main
+	python3 -m simulations.well-potential.infinite.main
 
 finite:
 	@echo "Running Finite Well Simulation..."
-	python3 -m simulations.finite.main
+	python3 -m simulations.well-potential.finite.main
 
 harmonic:
 	@echo "Running Harmonic Oscillator Simulation..."

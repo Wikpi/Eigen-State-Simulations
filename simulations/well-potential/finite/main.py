@@ -19,7 +19,7 @@ class FiniteWellPotential(sm.ModelSystem):
     # Infinite well potential model constructor
     def __init__(self) -> None:
         self.label: str = "Finite Well Potential"
-        self.dataPath: str = "simulations/finite/data"
+        self.dataPath: str = "simulations/well-potential/finite/data"
         self.initialConditions: dict = {
             "odd": [0, 1],
             "even": [1, 0]
