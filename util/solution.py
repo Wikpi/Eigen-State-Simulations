@@ -37,7 +37,7 @@ class Solution:
         self.label: str = "New Solution" # Abstract non-empty label
         self.result: NDArray = np.array([])
         self.normalised: NDArray = np.array([])
-        self.epsilon = 0
+        self.epsilon: float = 0
 
     # Normalise the solution.
     def normalise(self, xValues: NDArray) -> NDArray:
@@ -63,6 +63,7 @@ def getSolution(model: "simulation.ModelSystem", xValues: NDArray, epsilon: floa
     # Configure new solution class object
     newSolution: Solution = Solution("$\\epsilon$ = %.1f" % epsilon, solutionResult[:, 0])
     newSolution.type = solutionType
+    newSolution.epsilon = epsilon
 
     # Most of the time we want to get normalised results
     if normalise:
