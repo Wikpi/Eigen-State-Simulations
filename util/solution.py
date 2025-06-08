@@ -70,27 +70,37 @@ def normaliseSolution(xValues: NDArray, yValues: NDArray) -> NDArray:
     """`normaliseSolution` normalises the given function values by finding the approximate integral."""
     
     #Area with rectangles below the graph
-    lowerIntegral: float = integrateSolution(xValues, yValues)
+    lowerIntegral: float = integrateSolution(xValues, yValues, "lower")
     
     #Area with rectangles above the graph
-    upperIntegral: float = integrateSolution(xValues, yValues)
+    upperIntegral: float = integrateSolution(xValues, yValues, "upper")
     
-    #The normalisation factor is given by sqrt(integral value)*2 (when evaluated for x = 0 to x = 0.5)
     #The average of the upper and lower bound integral is used for additional accuracy
-    normalisationFactor: float = (upperIntegral**0.5 + lowerIntegral**0.5) #the average is not divided by 2 because the function is only called for the y1 values from 0 to 0.5
+    approxIntegral : float = (lowerIntegral + upperIntegral)/2
     
-    return yValues/normalisationFactor
+    #The normalisation factor is given by sqrt(2 * integral value) (when evaluated for x = 0 to x = L)
+    normalisationFactor: float = math.sqrt(2 * approxIntegral) 
+
+    return yValues / normalisationFactor
 
 # Simple integration method.
-def integrateSolution(xValues: NDArray, yValues: NDArray) -> float:
-    """`integrateSolution` integrates function using rectangular method."""
+def integrateSolution(xValues: NDArray, yValues: NDArray, type: str = "lower") -> float:
+    """`integrateSolution` integrates function using rectangular method. \n
+        type can be set to 'upper' or 'lower'
+    """
 
     integral: float = 0
     
+    #Configure function type as upper or lower
+    if type == "lower":
+        x = 0
+    elif type == "upper":
+        x = 1
+
     # Add up the rectangles
     for i in range(xValues.size - 1):
         dx = math.fabs(xValues[i + 1] - xValues[i])
-        dy = yValues[i]**2
+        dy = yValues[i + x]**2 #the x value determines if the upper or lower integral is calculated
 
         integral += dy * dx
 
