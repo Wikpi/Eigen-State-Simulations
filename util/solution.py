@@ -37,6 +37,7 @@ class Solution:
         self.label: str = "New Solution" # Abstract non-empty label
         self.result: NDArray = np.array([])
         self.normalised: NDArray = np.array([])
+        self.epsilon = 0
 
     # Normalise the solution.
     def normalise(self, xValues: NDArray) -> NDArray:
