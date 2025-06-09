@@ -8,6 +8,10 @@ This collection of simulations implements finite-difference solutions to the one
 - **Compare numerical results** against known analytic values (where available).
 - **Explore parameter dependence** (well depth, oscillator frequency, Morse parameter λ).
 
+- Main project:
+  Harmonic Oscialltor Potential
+  (The other projects were also implemented to some degree)
+
 ## Structure
 
 1. **`simulations/`**  
