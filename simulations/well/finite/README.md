@@ -21,9 +21,10 @@ Matplotlib
 
 ## Parameters
 
+Name            | Description                         | Default
 --------------- | ----------------------------------- | -------
 xMin            | Well integration start              | 0.0
-xMax            | well integration end                | 1.5
+xMax            | well integration end                | 0.5
 xStep           | Well integration step               | 0.005
 wellWall        | Well wall position                  | 0.5
 z0List          | Initial z0 to simulate              | [1, 5, 8, 14]
