@@ -8,6 +8,7 @@ import math
 import util.simulation as sm
 import util.core as core
 import util.plot as plot
+import util.bracket as br
 
 class FiniteWellPotential(sm.ModelSystem):
     """Base model system object class for finite well potential simulation.
@@ -106,10 +107,10 @@ def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> dict[tup
     print("len of bound states for z0: ", len(evenRoots+oddRoots))
 
     # Even though we found the roots, it would be better to bracket through and approxiamte the solution even further
-    evenBrackets: dict[tuple[float, float], str] = core.computeBrackets(evenRoots, "even")
-    oddBrackets: dict[tuple[float, float], str] = core.computeBrackets(oddRoots, "odd")
+    evenBrackets: list[br.Bracket] = br.computeBrackets(evenRoots, "even")
+    oddBrackets: list[br.Bracket] = br.computeBrackets(oddRoots, "odd")
 
-    return evenBrackets | oddBrackets
+    return evenBrackets + oddBrackets
 
 # The start value of integration
 xMin: float = 0
@@ -131,12 +132,12 @@ def main() -> None:
     simulation.modifyGrid(xMin, xMax, xStep, wellWall, "v0 (Dimensionless)", "Wavefunction values")
     
     # List for holding computed brackets, which will be used to approximate bounding state solutions
-    bracketList: dict[tuple[float, float], str] = {}
+    bracketList: list[br.Bracket] = []
 
     # Compute all epsilon brackets from initial z0
     for z0 in z0List:
         print("z0 = ", z0)
-        newStates: dict[tuple[float, float], str] = findEnergy(model, z0, simulation.xValues)
+        newStates: list[br.Bracket] = findEnergy(model, z0, simulation.xValues)
 
         # Problem asks for 2 specific v0
         # if len(newStates) == 1 or len(newStates) == 2 or len(newStates) == 4:
@@ -144,7 +145,7 @@ def main() -> None:
 
         #     print("v0 = %.2f has %d bounding states." % (v0 , len(newStates)))
 
-        bracketList.update(newStates)
+        bracketList.extend(newStates)
 
     # sm.bracketSimulation(simulation, model, bracketList, True)
     simulation.modifyModel(model)

@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 import util.plot as plot
 import util.core as core
 import util.solution as sl
+import util.bracket as br
 
 # Base model system object class.
 class ModelSystem:
@@ -101,7 +102,7 @@ class Simulation:
         self.solutions.clear()
 
     # Run the simulation solving method.
-    def runSolve(self, epsilonList: list, plot: bool = False) -> list:
+    def runSolve(self, epsilonList: list["core.Epsilon"], plot: bool = False) -> list:
         """`runSolve` runs the simulation in solving mode."""
         
         if self.model is None:
@@ -121,7 +122,7 @@ class Simulation:
         return self.solutions
 
     # Run the simulation bracketing method.
-    def runBracket(self, bracketList: list, plot: bool = False) -> list:
+    def runBracket(self, bracketList: list[br.Bracket], plot: bool = False) -> list:
         """`runBracket` runs the simulation in bracketing mode."""
         
         if self.model is None:
@@ -132,7 +133,7 @@ class Simulation:
 
         self.clearSolutions()
 
-        self.solutions = core.bracketEnergyState(self.model, self.xValues, bracketList)
+        self.solutions = br.bracketEnergyState(self.model, self.xValues, bracketList)
 
         # Plotting is optional
         if plot:

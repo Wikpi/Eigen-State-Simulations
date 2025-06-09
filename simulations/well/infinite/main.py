@@ -4,6 +4,8 @@ import math
 
 # Custom imports
 import util.simulation as sm
+import util.core as core
+import util.bracket as br
 
 class InfiniteWellPotential(sm.ModelSystem):
     """Base model system object class. Should be inherited and adapted per simulation.
@@ -51,13 +53,15 @@ def main() -> None:
     simulation: sm.Simulation = sm.Simulation("%s Solve Simulation" % model.label)
     simulation.modifyGrid(0, 0.5, 0.005, 0.5, "Position x/L (Dimensionless)", "Wavefunction values")
     
-
-    epsilonList: dict[float, str] = {}
+    # Initial epsilon list with found data: parity...
+    epsilonList: list[core.Epsilon] = []
     
     for epsilon in initialEpsilons:
         parity = checkWavefunctionEvenOdd(epsilon)
 
-        epsilonList[epsilon] = parity
+        newEpsilon: core.Epsilon = core.Epsilon(epsilon, parity)
+
+        epsilonList.append(newEpsilon)
 
     # Solve system of ODEs for epsilon list
     sm.solveSimulation(simulation, model, epsilonList, True)
@@ -69,7 +73,7 @@ def main() -> None:
     model.iterationCount = 25
     model.approximatation = 1e-6
 
-    bracketList: dict[tuple[float, float], str] = {(0.8, 1.1): "even"}
+    bracketList: list[br.Bracket] = [br.Bracket(0.8, 1.1, "even")]
 
     # Bracket energy state
     sm.bracketSimulation(simulation, model, bracketList, True)

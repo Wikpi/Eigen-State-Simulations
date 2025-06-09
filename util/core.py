@@ -8,63 +8,39 @@ from scipy.constants import pi
 # Custom imports
 import util.solution as sl
 import util.simulation as sm
+import util.bracket as br
 
-# One of simulation computations.
-def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracketList: dict[tuple[float, float], str]) -> list[sl.Solution]:
-    """`bracketEnergyState` finds the energy state approximation using bracketing method based on the `model` and `bracketList[[epsilonHigh, epsilonLow]...]`"""
-    
-    solutions: list[sl.Solution] = []
-    
-    iterationCtx: int = 20 # Default iteration count, in the case that the model does not provide a specified count
-    if hasattr(model, "iterationCount") and model.iterationCount > 0:
-        iterationCtx = model.iterationCount
+class Epsilon:
+    """
+        Base epsilon object class.
 
-    approximatation: int = 1e-6 # Default approximatation, in the case that the model does not provide a specified approximatation
-    if hasattr(model, "approximatation"):
-        approximatation = model.approximatation
+        Class variables:
+         #   value: float - epsilon value
+         #   parity: str  - epsilon parity
+    """
 
-    for bracket in bracketList:
-        parity = bracketList[bracket]
-        (epsilonLow, epsilonHigh) = bracket
-        for i in range(iterationCtx):
-            # If prediction gap is already smaller than `approximation` then its good enough
-            if abs(epsilonHigh - epsilonLow) < approximatation:
-                break
+    def __init__(self, value: float, parity: str):
+        self.reset()
 
-            # Midpoint in the prediction gap - current approximation
-            epsilonMid: float = (epsilonHigh + epsilonLow) / 2
-            
-            solutionLow: sl.Solution = sl.getSolution(model, xValues, epsilonLow, True, parity)
-            solutionHigh: sl.Solution = sl.getSolution(model, xValues, epsilonHigh, True, parity)
-            solutionMid: sl.Solution = sl.getSolution(model, xValues, epsilonMid, True, parity)
-            
-            # Depending on what solution is at the wall (where lim x -> L and function 'vanishes), adapt the bounding prediction limits
-            if np.sign(solutionMid.result[-1]) == np.sign(solutionHigh.result[-1]):
-                epsilonHigh = epsilonMid
-            else:
-                epsilonLow = epsilonMid
-        
-        epsilonRoot = (epsilonHigh + epsilonLow) / 2
-        solution: sl.Solution = sl.getSolution(model, xValues, epsilonRoot, True, parity)
+        self.value = value
+        self.parity = parity
 
-        # Append the last made approximation through bracketing
-        solutions.append(solution)
-
-    return solutions
+    def reset(self) -> None:
+        self.value = 0
+        self.parity = ""
 
 # One of simulation computations. 
-def solveEpsilonList(model: "simulation.ModelSystem", xValues: NDArray, epsilonList: dict[float, str]) -> list[sl.Solution]:
+def solveEpsilonList(model: "simulation.ModelSystem", xValues: NDArray, epsilonList: list[Epsilon]) -> list[sl.Solution]:
     """`solveEpsilonList` computes the solutions for the given `model` and `epsilonList`"""
     
+    # Final solutions list initialisation
     solutions: list[sl.Solution] = [] 
-    
+
     # Check every epsilon for solution
     for epsilon in epsilonList:
         try:
-            parity = epsilonList[epsilon]
-
             # Compute a new normalised solution
-            newSolution: sl.Solution = sl.getSolution(model, xValues, epsilon, True, parity)
+            newSolution: sl.Solution = sl.getSolution(model, xValues, epsilon.value, True, epsilon.parity)
 
             solutions.append(newSolution)
         except ValueError as error:
@@ -93,18 +69,3 @@ def findRoots(function, guesses, z0) -> list[float]:
         roots.append(root[0])
 
     return roots
-
-# Make bracket pairs from computed values.
-def computeBrackets(roots: list, bracketType: str, margin: float = 1e-2) -> dict[tuple[float, float], str]:
-    """`computeBrackets` creates bracket pairs for each found root in `roots within the `margin`."""
-    
-    brackets: dict[tuple[float, float], str] = {}
-
-    for root in roots:
-        # Convert z into epsilon vlaues: epsilon = (2 * z / pi) ** 2
-        epsilon: float = (2 * root / pi)**2
-
-        # Compute marginalised brackers
-        brackets[(epsilon - margin, epsilon + margin)] = bracketType
-
-    return brackets
