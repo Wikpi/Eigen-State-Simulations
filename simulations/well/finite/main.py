@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.constants import pi
 from numpy.typing import NDArray
+import math
 
 # Custom imports
 import util.simulation as sm
@@ -32,57 +33,83 @@ class FiniteWellPotential(sm.ModelSystem):
 
         psi, dpsi = y # psi and psi derivative
 
-        v = computeV(x)
+        v = computeV(x) # potential
 
         return [dpsi, pi**2 * (v - epsilon) * psi]
 
-def computeV(x: float) -> NDArray:
-    V0 = 1 # Some debug potential outside the well
+V0: float = 8.0 # Some debug potential outside the well
 
+# Computes the potential.
+def computeV(x: float) -> NDArray:
+    """`computeV` returns piecewise smoothed function values based on `x`."""
+    
     return np.piecewise(x, [np.abs(x) <= wellWall, np.abs(x) > wellWall], [0, V0])
 
+# Model for even solutions.
 def evenModel(z, z0) -> NDArray:
+    """`evenModel` returns even model solutions for z values."""
+
+    # sqrt(z0**2 + z**2) = z * tan(z)
     return np.sqrt(z0**2 - z**2) - z * np.tan(z)
 
-# For even solutions (n = 1,3,5,…)
-def evenGuesses(z0: float) -> list:
-    guesses = []
-
-    # One solution per full scope of pi
-    kMax = int(z0 / pi)
-
+# Guesses for even solutions (n = 1,3,5,…).
+def evenGuesses(z0: float) -> list[float]:
+    """`evenGuesses` computes all approximate estimates for even solutions."""
+    
+    guesses: list[float] = []
+    
+    # Generate (2k−1)*π/2 up through the last half-π before z0
+    kMax: int = math.ceil(z0 / pi)
     for k in range(1, kMax + 1):
-        guesses.append((2 * k - 1) * pi / 2)
+        guess: float = (2*k - 1) * pi / 2
+    
+        if guess < z0:
+            guesses.append(guess)
 
+    # ensure at least one for very shallow wells
+    if not guesses and z0 > 0:
+        guesses.append(z0 / 2)
+    
     return guesses
 
+# Model for odd solutions.
 def oddModel(z, z0) -> NDArray:
+    """`oddModel` returns odd model solutions for z values."""
+    
     with np.errstate(divide='ignore', invalid='ignore'): # since the denominator is always really close to 0
+        # sqrt(z0**2 + z**2) = -z / tan(z)
         return np.sqrt(z0**2 - z**2) + z / np.tan(z)
 
-# For odd solutions (n = 2,4,6,…)
-def oddGuesses(z0: float) -> list:
-    guesses: list = []
-
-    # One solution/guess per full scope of pi
-    kMax = int(z0 / pi)
-
-    # Compute all kMax guess (inclusive)
+# Guesses for odd solutions (n = 2,4,6,…).
+def oddGuesses(z0: float) -> list[float]:
+    """`oddGuesses` computes all approximate estimates for odd solutions."""
+    
+    guesses: list[float] = []
+    
+    # Generate k*π up through the last π before z0
+    kMax: int = math.ceil(z0 / pi)
     for k in range(1, kMax + 1):
-        guesses.append(k * pi)
+        guess: float = k * pi
+
+        if guess < z0:
+            guesses.append(guess)
 
     return guesses
 
 # Computes the epsilon energy brackets for simulation.
-def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> list:
-    evenRoots = core.findRoots(evenModel, evenGuesses(z0), z0)    
-    oddRoots = core.findRoots(oddModel, oddGuesses(z0), z0)
+def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> list[tuple[float, float]]:
+    """`findEnergy` computes all even and odd epsilon energy brackets for a given `z0` and `model`."""
+    
+    evenRoots: list[float] = core.findRoots(evenModel, evenGuesses(z0), z0)    
+    oddRoots: list[float] = core.findRoots(oddModel, oddGuesses(z0), z0)
+
+    print("len of bound states for z0: ", len(evenRoots+oddRoots))
 
     # Even though we found the roots, it would be better to bracket through and approxiamte the solution even further
-    evenBrackets = core.computeBrackets(evenRoots)
-    oddBrackets = core.computeBrackets(oddRoots)
+    evenBrackets: list[tuple[float, float]] = core.computeBrackets(evenRoots)
+    oddBrackets: list[tuple[float, float]] = core.computeBrackets(oddRoots)
 
-    fullBrackets = evenBrackets + oddBrackets
+    fullBrackets: list[tuple[float, float]] = evenBrackets + oddBrackets
 
     return fullBrackets
 
@@ -94,21 +121,30 @@ wellWall: float = 0.5
 xMax: float = wellWall * 3
 # The step value
 xStep: float = 0.005
+# Initial z0 list
+z0List: list[float] = [1, 5, 8, 14]
 
 def main() -> None:
+    # Initial finite well potential model used for the simulation
     model: FiniteWellPotential = FiniteWellPotential()
 
-    simulation: sm.Simulation = sm.Simulation("%s Solve Simulation" % model.label)
+    # Simulation object with default/specified configuration
+    simulation: sm.Simulation = sm.Simulation("%s Simulation for V0 = %.1f" % (model.label, V0))
     simulation.modifyGrid(xMin, xMax, xStep, wellWall, "v0 (Dimensionless)", "Wavefunction values")
     
-    bracketList = []
-
-    # Initial z0 list
-    z0List = [1, 5, 8, 14]
+    # List for holding computed brackets, which will be used to approximate bounding state solutions
+    bracketList: list[tuple[float, float]] = []
 
     # Compute all epsilon brackets from initial z0
     for z0 in z0List:
-        newStates = findEnergy(model, z0, simulation.xValues)
+        print("z0 = ", z0)
+        newStates: list[tuple[float, float]] = findEnergy(model, z0, simulation.xValues)
+
+        # Problem asks for 2 specific v0
+        # if len(newStates) == 1 or len(newStates) == 2 or len(newStates) == 4:
+        #     v0 = (2 * z0 / pi)**2
+
+        #     print("v0 = %.2f has %d bounding states." % (v0 , len(newStates)))
 
         bracketList.extend(newStates)
 
@@ -117,15 +153,17 @@ def main() -> None:
     solutions = simulation.runBracket(bracketList, False)
 
     # Since solution object initializations are adapted for epsilons, need to hard change the labels into z0 here
-    # Although could leave the epsilons as well, but would more obscure.
+    # Although could leave the epsilons as well, but would be more obscure.
     for solution in solutions:
-        z0 = round(pi / 2 * np.sqrt(solution.epsilon))
+        z0: float = pi / 2 * np.sqrt(solution.epsilon)
 
-        solution.label = "z0 = %d" % z0
+        solution.label = "z0 = %.2f" % z0
 
     simulation.solutions = solutions
 
     simulation.plot()
+
+    print("Done running the %s simulation." % model.label)
 
     return  
 

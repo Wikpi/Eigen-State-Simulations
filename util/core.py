@@ -3,16 +3,17 @@ import math
 import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import fsolve
+from scipy.constants import pi
 
 # Custom imports
 import util.solution as sl
 import util.simulation as sm
 
 # One of simulation computations.
-def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracketList: list) -> None:
+def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracketList: list) -> list[sl.Solution]:
     """`bracketEnergyState` finds the energy state approximation using bracketing method based on the `model` and `bracketList[[epsilonHigh, epsilonLow]...]`"""
     
-    solutions: list = []
+    solutions: list[sl.Solution] = []
     
     iterationCtx: int = 20 # Default iteration count, in the case that the model does not provide a specified count
     if hasattr(model, "iterationCount") and model.iterationCount > 0:
@@ -22,6 +23,7 @@ def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracke
     if hasattr(model, "approximatation"):
         approximatation = model.approximatation
 
+    # Go through all bracker pairs
     for (epsilonLow, epsilonHigh) in bracketList:
         for i in range(iterationCtx):
             # If prediction gap is already smaller than `approximation` then its good enough
@@ -49,16 +51,16 @@ def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracke
     return solutions
 
 # One of simulation computations. 
-def solveEpsilonList(model: "simulation.ModelSystem", xValues: NDArray, epsilonList: list) -> list:
+def solveEpsilonList(model: "simulation.ModelSystem", xValues: NDArray, epsilonList: list) -> list[sl.Solution]:
     """`solveEpsilonList` computes the solutions for the given `model` and `epsilonList`"""
     
-    solutions: list = [] 
+    solutions: list[sl.Solution] = [] 
     
     # Check every epsilon for solution
     for epsilon in epsilonList:
         try:
             # Compute a new normalised solution
-            newSolution: solution.Solution = sl.getSolution(model, xValues, epsilon, True)
+            newSolution: sl.Solution = sl.getSolution(model, xValues, epsilon, True)
 
             solutions.append(newSolution)
         except ValueError as error:
@@ -80,29 +82,35 @@ def checkWavefunctionEvenOdd(epsilon: float) -> str:
         return "even"
 
 # Finds roots of function with initial guess.
-def findRoots(function, guesses, z0) -> list:
-    roots: list = []
+def findRoots(function, guesses, z0) -> list[float]:
+    """`findRoots` finds solutions where `function` is zero (roots) for initial `guesses` and `z0` value."""
+    
+    roots: list[float] = []
 
     for guess in guesses:
         root, info, ier, _ = fsolve(function, guess, args=(z0,), full_output=True)
+        
         # Check if valid
         if ier != 1:
             continue
 
-        # avoid duplicates within tolerance
+        # Avoid duplicates within small tolerance
         if any(np.isclose(root, s, atol=1e-4) for s in roots):
             continue
 
         roots.append(root[0])
 
-    return sorted(roots)
+    return roots
 
-def computeBrackets(roots: list, margin: float = 1e-2) -> list:
-    brackets: list = []
+# Make bracket pairs from computed values.
+def computeBrackets(roots: list, margin: float = 1e-2) -> list[tuple[float, float]]:
+    """`computeBrackets` creates bracket pairs for each found root in `roots within the `margin`."""
+    
+    brackets: list[tuple[float, float]] = []
 
     for root in roots:
         # Convert z into epsilon vlaues: epsilon = (2 * z / pi) ** 2
-        epsilon = (2 * root / np.pi)**2
+        epsilon: float = (2 * root / pi)**2
 
         # Compute marginalised brackers
         brackets.append((epsilon - margin, epsilon + margin))

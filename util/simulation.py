@@ -69,7 +69,6 @@ class Simulation:
         self.xValues: NDArray = np.array([])
         self.wellWall: float = 0
         self.model: ModelSystem = None
-        self.initialValues: list = []
         self.solutions: list = []
 
     # Define a new simulation space.
@@ -157,13 +156,17 @@ class Simulation:
         for solution in self.solutions:
             plot.plotGraph(self.xValues, solution.normalised, solution.label, solution.type)
 
-        plot.saveGraph(self.model.dataPath, self.title)
+        if self.model != None:
+            plot.saveGraph(self.model.dataPath, self.title)
 
         # Display the graph
         plot.displayGraph()
 
-def solveSimulation(simulation: Simulation, model: ModelSystem, epsilonList: list, plot: bool = False) -> list:    
-    result: list = []
+# Helper method to simplify simulation solving running and debugging.
+def solveSimulation(simulation: Simulation, model: ModelSystem, epsilonList: list, plot: bool = False) -> list[sl.Solution]:    
+    """`solveSImulation` solves the provided `simulation` `model` based on the `epsilonList`. Handles any potential errors."""
+    
+    result: list[sl.Solution] = []
 
     try:
         simulation.modifyModel(model)
@@ -174,8 +177,11 @@ def solveSimulation(simulation: Simulation, model: ModelSystem, epsilonList: lis
 
     return result
 
-def bracketSimulation(simulation: Simulation, model: ModelSystem, bracketList: list, plot: bool = False) -> list: 
-    result: list = []
+# Helper method to simplify simulation bracketing running and debugging.
+def bracketSimulation(simulation: Simulation, model: ModelSystem, bracketList: list, plot: bool = False) -> list[sl.Solution]: 
+    """`solveSImulation` brackets the provided `simulation` `model` based on the `epsilonList`. Handles any potential errors."""
+    
+    result: list[sl.Solution] = []
 
     try:
         simulation.modifyModel(model)
