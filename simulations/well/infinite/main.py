@@ -1,5 +1,6 @@
 # Package imports
 from scipy.constants import pi
+import math
 
 # Custom imports
 import util.simulation as sm
@@ -30,6 +31,19 @@ class InfiniteWellPotential(sm.ModelSystem):
 
         return [y2, -pi**2 * epsilon * y1] # dy1dx and dy2dx
 
+# Determine the wavefunction type: odd or even.
+def checkWavefunctionEvenOdd(epsilon: float) -> str:
+    """`checkWavefunctionEvenOdd` determines whether the wavefunction is odd or even.
+        This is based on the fact: `epsilon = pow(n, 2)` and if `n` is even the
+        wavefunction will be odd, if `n` odd then the wavefunction will be even. 
+    """
+
+    if round(math.sqrt(epsilon)) % 2 == 0:
+        return "odd"
+    else:
+        return "even"
+
+initialEpsilons: list = [1, 4, 9, 16]
 
 def main() -> None:
     model: InfiniteWellPotential = InfiniteWellPotential()
@@ -37,7 +51,13 @@ def main() -> None:
     simulation: sm.Simulation = sm.Simulation("%s Solve Simulation" % model.label)
     simulation.modifyGrid(0, 0.5, 0.005, 0.5, "Position x/L (Dimensionless)", "Wavefunction values")
     
-    epsilonList: list = [1, 4, 9, 16]
+
+    epsilonList: dict[float, str] = {}
+    
+    for epsilon in initialEpsilons:
+        parity = checkWavefunctionEvenOdd(epsilon)
+
+        epsilonList[epsilon] = parity
 
     # Solve system of ODEs for epsilon list
     sm.solveSimulation(simulation, model, epsilonList, True)
@@ -49,7 +69,7 @@ def main() -> None:
     model.iterationCount = 25
     model.approximatation = 1e-6
 
-    bracketList: list = [(0.8, 1.1)]
+    bracketList: dict[tuple[float, float], str] = {(0.8, 1.1): "even"}
 
     # Bracket energy state
     sm.bracketSimulation(simulation, model, bracketList, True)
