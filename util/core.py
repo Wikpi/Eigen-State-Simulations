@@ -10,7 +10,7 @@ import util.solution as sl
 import util.simulation as sm
 
 # One of simulation computations.
-def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracketList: dict) -> None:
+def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracketList: dict[tuple[float, float], str]) -> list[sl.Solution]:
     """`bracketEnergyState` finds the energy state approximation using bracketing method based on the `model` and `bracketList[[epsilonHigh, epsilonLow]...]`"""
     
     solutions: list[sl.Solution] = []
@@ -53,7 +53,7 @@ def bracketEnergyState(model: "simulation.ModelSystem", xValues: NDArray, bracke
     return solutions
 
 # One of simulation computations. 
-def solveEpsilonList(model: "simulation.ModelSystem", xValues: NDArray, epsilonList: list) -> list[sl.Solution]:
+def solveEpsilonList(model: "simulation.ModelSystem", xValues: NDArray, epsilonList: dict[float, str]) -> list[sl.Solution]:
     """`solveEpsilonList` computes the solutions for the given `model` and `epsilonList`"""
     
     solutions: list[sl.Solution] = [] 
@@ -61,8 +61,10 @@ def solveEpsilonList(model: "simulation.ModelSystem", xValues: NDArray, epsilonL
     # Check every epsilon for solution
     for epsilon in epsilonList:
         try:
+            parity = epsilonList[epsilon]
+
             # Compute a new normalised solution
-            newSolution: sl.Solution = sl.getSolution(model, xValues, epsilon, True)
+            newSolution: sl.Solution = sl.getSolution(model, xValues, epsilon, True, parity)
 
             solutions.append(newSolution)
         except ValueError as error:
@@ -70,18 +72,6 @@ def solveEpsilonList(model: "simulation.ModelSystem", xValues: NDArray, epsilonL
             print("Warning computing solution: %s" % error)
         
     return solutions
-
-# Determine the wavefunction type: odd or even.
-def checkWavefunctionEvenOdd(epsilon: float) -> str:
-    """`checkWavefunctionEvenOdd` determines whether the wavefunction is odd or even.
-        This is based on the fact: `epsilon = pow(n, 2)` and if `n` is even the
-        wavefunction will be odd, if `n` odd then the wavefunction will be even. 
-    """
-
-    if round(math.sqrt(epsilon)) % 2 == 0:
-        return "odd"
-    else:
-        return "even"
 
 # Finds roots of function with initial guess.
 def findRoots(function, guesses, z0) -> list[float]:
@@ -105,16 +95,16 @@ def findRoots(function, guesses, z0) -> list[float]:
     return roots
 
 # Make bracket pairs from computed values.
-def computeBrackets(roots: list, margin: float = 1e-2) -> list[tuple[float, float]]:
+def computeBrackets(roots: list, bracketType: str, margin: float = 1e-2) -> dict[tuple[float, float], str]:
     """`computeBrackets` creates bracket pairs for each found root in `roots within the `margin`."""
     
-    brackets: list[tuple[float, float]] = []
+    brackets: dict[tuple[float, float], str] = {}
 
     for root in roots:
         # Convert z into epsilon vlaues: epsilon = (2 * z / pi) ** 2
         epsilon: float = (2 * root / pi)**2
 
         # Compute marginalised brackers
-        brackets.append((epsilon - margin, epsilon + margin))
+        brackets[(epsilon - margin, epsilon + margin)] = bracketType
 
     return brackets

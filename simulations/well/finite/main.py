@@ -97,7 +97,7 @@ def oddGuesses(z0: float) -> list[float]:
     return guesses
 
 # Computes the epsilon energy brackets for simulation.
-def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> list[tuple[float, float]]:
+def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> dict[tuple[float, float], str]:
     """`findEnergy` computes all even and odd epsilon energy brackets for a given `z0` and `model`."""
     
     evenRoots: list[float] = core.findRoots(evenModel, evenGuesses(z0), z0)    
@@ -106,12 +106,10 @@ def findEnergy(model: "sm.ModelSystem", z0: float, xValues: NDArray) -> list[tup
     print("len of bound states for z0: ", len(evenRoots+oddRoots))
 
     # Even though we found the roots, it would be better to bracket through and approxiamte the solution even further
-    evenBrackets: list[tuple[float, float]] = core.computeBrackets(evenRoots)
-    oddBrackets: list[tuple[float, float]] = core.computeBrackets(oddRoots)
+    evenBrackets: dict[tuple[float, float], str] = core.computeBrackets(evenRoots, "even")
+    oddBrackets: dict[tuple[float, float], str] = core.computeBrackets(oddRoots, "odd")
 
-    fullBrackets: list[tuple[float, float]] = evenBrackets + oddBrackets
-
-    return fullBrackets
+    return evenBrackets | oddBrackets
 
 # The start value of integration
 xMin: float = 0
@@ -133,12 +131,12 @@ def main() -> None:
     simulation.modifyGrid(xMin, xMax, xStep, wellWall, "v0 (Dimensionless)", "Wavefunction values")
     
     # List for holding computed brackets, which will be used to approximate bounding state solutions
-    bracketList: list[tuple[float, float]] = []
+    bracketList: dict[tuple[float, float], str] = {}
 
     # Compute all epsilon brackets from initial z0
     for z0 in z0List:
         print("z0 = ", z0)
-        newStates: list[tuple[float, float]] = findEnergy(model, z0, simulation.xValues)
+        newStates: dict[tuple[float, float], str] = findEnergy(model, z0, simulation.xValues)
 
         # Problem asks for 2 specific v0
         # if len(newStates) == 1 or len(newStates) == 2 or len(newStates) == 4:
@@ -146,7 +144,7 @@ def main() -> None:
 
         #     print("v0 = %.2f has %d bounding states." % (v0 , len(newStates)))
 
-        bracketList.extend(newStates)
+        bracketList.update(newStates)
 
     # sm.bracketSimulation(simulation, model, bracketList, True)
     simulation.modifyModel(model)
