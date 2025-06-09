@@ -43,3 +43,7 @@ make infinite
 
 Computed energies for specified epsilon values.
 Optionally plotted.
+
+![Infinite Well Potential Bracket Simulation](data/Infinite Well Potential Bracket Simulation.png)
+
+![Infinite Well Potential Solve Simulation](data/Infinite Well Potential Solve Simulation.png)
