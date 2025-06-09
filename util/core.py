@@ -55,6 +55,7 @@ def findRoots(function, guesses, z0) -> list[float]:
     
     roots: list[float] = []
 
+    # Find roots for every computed guess
     for guess in guesses:
         root, info, ier, _ = fsolve(function, guess, args=(z0,), full_output=True)
         

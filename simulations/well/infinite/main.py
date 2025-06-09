@@ -45,13 +45,32 @@ def checkWavefunctionEvenOdd(epsilon: float) -> str:
     else:
         return "even"
 
-initialEpsilons: list = [1, 4, 9, 16]
+# The start value of integration
+xMin: float = 0
+# The well limit
+wellWall: float = 0.5
+# The end value of integration
+xMax: float = wellWall
+# The step value
+xStep: float = 0.005
+# Initial epsilon list
+initialEpsilons: list[float] = [1, 4, 9, 16]
+
+# Low vlaue for the bracket
+bracketMin: float = 0.8
+# High value for the bracket
+bracketMax: float = 1.1
+
+# Custom parameters for more specific approximations
+# Usually not needed, as the default values handle pretty tight approximations
+modelIteration: int = 25
+modelAppriximation: float = 1e-6
 
 def main() -> None:
     model: InfiniteWellPotential = InfiniteWellPotential()
 
     simulation: sm.Simulation = sm.Simulation("%s Solve Simulation" % model.label)
-    simulation.modifyGrid(0, 0.5, 0.005, 0.5, "Position x/L (Dimensionless)", "Wavefunction values")
+    simulation.modifyGrid(xMin, xMax, xStep, wellWall, "Position x/L (Dimensionless)", "Wavefunction values")
     
     # Initial epsilon list with found data: parity...
     epsilonList: list[core.Epsilon] = []
@@ -70,10 +89,10 @@ def main() -> None:
 
     simulation.title = "%s Bracket Simulation" % model.label
 
-    model.iterationCount = 25
-    model.approximatation = 1e-6
+    model.iterationCount = modelIteration
+    model.approximatation = modelAppriximation
 
-    bracketList: list[br.Bracket] = [br.Bracket(0.8, 1.1, "even")]
+    bracketList: list[br.Bracket] = [br.Bracket(bracketMin, bracketMax, "even")]
 
     # Bracket energy state
     sm.bracketSimulation(simulation, model, bracketList, True)

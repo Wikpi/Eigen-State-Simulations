@@ -98,6 +98,7 @@ def integrateSolution(xValues: NDArray, yValues: NDArray, type: str = "lower") -
         type can be set to 'upper' or 'lower'
     """
 
+    # Final integral value
     integral: float = 0
     
     #Configure function type as upper or lower

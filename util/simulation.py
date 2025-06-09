@@ -167,6 +167,7 @@ class Simulation:
 def solveSimulation(simulation: Simulation, model: ModelSystem, epsilonList: list, plot: bool = False) -> list[sl.Solution]:    
     """`solveSImulation` solves the provided `simulation` `model` based on the `epsilonList`. Handles any potential errors."""
     
+    # Solutions from the simulation
     result: list[sl.Solution] = []
 
     try:
@@ -182,6 +183,7 @@ def solveSimulation(simulation: Simulation, model: ModelSystem, epsilonList: lis
 def bracketSimulation(simulation: Simulation, model: ModelSystem, bracketList: list, plot: bool = False) -> list[sl.Solution]: 
     """`solveSImulation` brackets the provided `simulation` `model` based on the `epsilonList`. Handles any potential errors."""
     
+    # Solutions from the simulation
     result: list[sl.Solution] = []
 
     try:
