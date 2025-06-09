@@ -40,3 +40,7 @@ make finite
 
 Computed energies for specified epsilon values.
 Optionally plotted.
+
+* Solving for default initial list plot:
+
+<img src="data/Finite Well Potential Simulation for V0 = 8.0.png"   alt="Solve Simulation"   />
