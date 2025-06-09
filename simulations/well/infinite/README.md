@@ -44,6 +44,10 @@ make infinite
 Computed energies for specified epsilon values.
 Optionally plotted.
 
-![Infinite Well Potential Bracket Simulation](data/Infinite_Well_Potential_Bracket_Simulation.png)
+* Solving for default initial list plot:
 
-![Infinite Well Potential Solve Simulation](data/Infinite_Well_Potential_Solve_Simulation.png)
+<img src="data/Infinite Well Potential Solve Simulation.png"   alt="Solve Simulation"   />
+
+* Bracketing the default bracket plot:
+
+<img src="data/Infinite Well Potential Bracket Simulation.png" alt="Bracket Simulation" />
