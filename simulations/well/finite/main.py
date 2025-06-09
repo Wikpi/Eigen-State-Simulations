@@ -140,10 +140,10 @@ def main() -> None:
         newStates: list[br.Bracket] = findEnergy(model, z0, simulation.xValues)
 
         # Problem asks for 2 specific v0
-        # if len(newStates) == 1 or len(newStates) == 2 or len(newStates) == 4:
-        #     v0 = (2 * z0 / pi)**2
+        if len(newStates) == 1 or len(newStates) == 2 or len(newStates) == 4:
+            v0 = (2 * z0 / pi)**2
 
-        #     print("v0 = %.2f has %d bounding states." % (v0 , len(newStates)))
+            print("v0 = %.2f has %d bounding states." % (v0 , len(newStates)))
 
         bracketList.extend(newStates)
 
