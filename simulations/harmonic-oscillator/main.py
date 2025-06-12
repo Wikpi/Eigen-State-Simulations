@@ -40,21 +40,25 @@ def findSolutionBrackets(model: sm.ModelSystem, xValues: NDArray, epsilonRange: 
         epsilon bracket ranges where solutions of a given `parity` may be found, paired with the parity.
     """
 
+    # From the epsilon range compute a new epsilon list full of epsilon objects
+    epsilonList: list = []
+    for epsilon in epsilonRange:
+        epsilonList.append(core.Epsilon(epsilon, parity))
+    
+    # Solutions for all epsilons in list
+    solutions: list[sl.Solution] = core.solveEpsilonList(model, xValues, epsilonList)
+
     # Initialising list of endpoints of sampled solutions
     yEndpoints: list = []
-
     # Solving the wavefunction for the sampled epsilons assuming initial conditions according to parity, and storing the endpoint values in a list
-    for epsilon in epsilonRange:
-        solution: sl.Solution = sl.getSolution(model, xValues, epsilon, parity= parity)
-        
+    for solution in solutions:
         yEndpoints.append(solution.result[-1])
-    
+
     # Computed brackets
     solutionBrackets: [br.Bracket] = []
 
     # Checking where the endpoint changes sign, and storing those epsilon ranges as tuples paired with solution parity
     for i in range(np.size(epsilonRange) - 1):
-
         if yEndpoints[i + 1] * yEndpoints[i] < 0:
             newBracket: br.Bracket = br.Bracket(epsilonRange[i], epsilonRange[i + 1], parity)
 
@@ -63,14 +67,16 @@ def findSolutionBrackets(model: sm.ModelSystem, xValues: NDArray, epsilonRange: 
     return solutionBrackets
 
 # Specifying xValue range and step
+xMin: float = 0
 xMax: float = 7
 xStep: float = 0.005
-xValues: NDArray = np.linspace(0, xMax, int(7/xStep))
+xValues: NDArray = np.linspace(xMin, xMax, int(xMax/xStep))
 
 # Specifying epsilon range and step
+epsilonMin: float = 0
 epsilonMax: float = 5
 epsilonStep: float = 0.01
-epsilonRange: NDArray = np.linspace(0, epsilonMax, int(5/epsilonStep))
+epsilonRange: NDArray = np.linspace(epsilonMin, epsilonMax, int(epsilonMax/epsilonStep))
 
 def main() -> None:
     # Defining HarmonicOscillator modelSystem
@@ -78,7 +84,7 @@ def main() -> None:
 
     # Defining simulation 
     simulation: sm.Simulation = sm.Simulation()
-    simulation.modifyGrid(0, xMax, xStep, 0, "$Position  \\xi  (Dimensionless)$", "$Wavefunction y_1 Values")
+    simulation.modifyGrid(xMin, xMax, xStep, xLabel="$Position  \\xi  (Dimensionless)$", yLabel="$Wavefunction y_1 Values")
 
     # Specifying simulation parameters, particularly for the bracketEnergyState() function
     model.iterationCount = 32
@@ -98,7 +104,7 @@ def main() -> None:
     simulation.title = "%s bracket simulation: first %d solutions"%(model.label, len(solutionBrackets))
 
     # Running the bracket simulation for the solution brackets found
-    sm.bracketSimulation(simulation, model, solutionBrackets, plot= True)
+    sm.bracketSimulation(simulation, model, solutionBrackets, plot=True)
 
     print("Done running the %s simulation." % model.label)
 
