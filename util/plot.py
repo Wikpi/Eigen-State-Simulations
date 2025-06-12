@@ -53,7 +53,7 @@ def displayGraph() -> None:
     """`displayGraph` shows the computed simulation graph to the screen."""
 
     plt.legend()
-    
+
     plt.show()
 
 # Save graph to file.
@@ -65,6 +65,9 @@ def saveGraph(outputPath: str = "data", graphName: str = "new-graph") -> None:
 
     filename: str = os.path.join(outputPath, "%s.png" % graphName)
     
+    # Make sure that the legend is alwasy present in the saved figures
+    plt.legend()
+
     plt.savefig(filename)
 
 # Defines well walls on the graph.
