@@ -78,7 +78,6 @@ class Simulation:
         
         # Overall simulation integration range
         self.xValues = np.linspace(xMin, xMax, int(xMax/xStep))
-        self.wellWall = wellWall
 
         if xLabel != "":
             self.xLabel = xLabel

@@ -117,7 +117,7 @@ xMin: float = 0
 # The well limit
 wellWall: float = 0.5
 # The end value of integration (for finite we define something beyond the wall: 2L, 3L...)
-xMax: float = wellWall * 3
+xMax: float = wellWall * 5
 # The step value
 xStep: float = 0.005
 # Initial z0 list
